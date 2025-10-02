@@ -1,0 +1,16 @@
+I have a new idea I want to implmenet eventually, 
+that is where the possition of the cube makes a sentence.
+So basically each piece as long as there are degrees of freedom left makes bits up to be placed, and then you use those bits with an encoding to create letters.
+
+So I found RubikOptimal which supposedly should allow me to have a solver to get to that location once I know what it is.
+
+I probably should just use a c implementation instead of something that takes almost a gig of space, but I assume if I run out I will find this project and kill the venv.
+ The page is here https://pypi.org/project/RubikOptimal/
+
+Well, I read further down and saw that it can take like 3 hours to solve even after the tables have been generated.  I think I will run the c code instead.
+
+Here is a c++ solver, but it has a gui, so I don't know if it counts.
+
+10/02/2025
+Here is a python solver which is not optimal but it is fast:
+https://pypi.org/project/kociemba/

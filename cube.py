@@ -167,7 +167,8 @@ class Cube:
         return self
 
     def do_command( self, command ):
-        if command == "L": 
+        done = False
+        if command == "L":
             #reverse direction because clockwise is backwards on left.
             self.rotate( Cube.X_AXIS, slice=0, distance=-1 )
         elif command == "L'":
@@ -234,11 +235,13 @@ class Cube:
         elif command == "exit":
             done = True
         elif command == "reset":
-            self = Cube( self.size )
+            self.__init__( self.size )
         elif command == "scramble":
             self.scramble()
         else:
             raise ValueError( "I don't understand that command." )
+        
+        return done
 
 
 def main( size=3 ):
@@ -253,7 +256,7 @@ def main( size=3 ):
 
         #run the command
         try:
-            cube.run_command( command )
+            done = cube.do_command( command )
         except ValueError as e:
             print( e )
 
