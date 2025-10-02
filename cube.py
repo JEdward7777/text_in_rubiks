@@ -1,6 +1,7 @@
 
 import copy
 import random
+import kociemba
 
 
 NUM_ROTATIONS = 4
@@ -163,8 +164,43 @@ class Cube:
             
             if talk:
                 print( f"axis {axis} slice {slice} distance {distance}" )
+                print( self.get_solution() )
                 print( self )
+
+
         return self
+
+    def get_solution( self ):
+        location_names = [x.strip() for x in "U1, U2, U3, U4, U5, U6, U7, U8, U9, R1, R2, R3, R4, R5, R6, R7, R8, R9, F1, F2, F3, F4, F5, F6, F7, F8, F9, D1, D2, D3, D4, D5, D6, D7, D8, D9, L1, L2, L3, L4, L5, L6, L7, L8, L9, B1, B2, B3, B4, B5, B6, B7, B8, B9".split( "," )]
+        location_spots = {
+                                               "U1": (3,0), "U2": (4,0), "U3": (5,0),
+                                               "U4": (3,1), "U5": (4,1), "U6": (5,1),
+                                               "U7": (3,2), "U8": (4,2), "U9": (5,2),
+        "L1": (0,3), "L2": (1,3), "L3": (2,3), "F1": (3,3), "F2": (4,3), "F3": (5,3), "R1": (6,3), "R2": (7,3), "R3": (8,3), "B1": (9,3), "B2": (10,3), "B3": (11,3),
+        "L4": (0,4), "L5": (1,4), "L6": (2,4), "F4": (3,4), "F5": (4,4), "F6": (5,4), "R4": (6,4), "R5": (7,4), "R6": (8,4), "B4": (9,4), "B5": (10,4), "B6": (11,4),
+        "L7": (0,5), "L8": (1,5), "L9": (2,5), "F7": (3,5), "F8": (4,5), "F9": (5,5), "R7": (6,5), "R8": (7,5), "R9": (8,5), "B7": (9,5), "B8": (10,5), "B9": (11,5),
+                                               "D1": (3,6), "D2": (4,6), "D3": (5,6),
+                                               "D4": (3,7), "D5": (4,7), "D6": (5,7),
+                                               "D7": (3,8), "D8": (4,8), "D9": (5,8),
+        }
+        color_map = {
+                      "y": "U",
+            "b": "L", "r": "F", "g": "R", "o": "B",
+                      "w": "D",
+        }
+
+        current_string = ""
+
+        lines_split = self.lines.split( "\n" )
+
+        for location_name in location_names:
+            location = location_spots[location_name]
+            current_color = lines_split[location[1]][location[0]]
+            current_name = color_map[current_color]
+            current_string += current_name
+
+        return kociemba.solve( current_string )
+
 
     def do_command( self, command ):
         done = False
@@ -232,12 +268,16 @@ class Cube:
         elif command == "z2":
             for i in range( self.size ):
                 self.rotate( Cube.Z_AXIS, slice=i, distance=2 )
-        elif command == "exit":
+        elif command == "exit" or command == "exit()":
             done = True
         elif command == "reset":
             self.__init__( self.size )
         elif command == "scramble":
             self.scramble()
+        elif command == "talk scramble":
+            self.scramble( talk=True )
+        elif command == "solve":
+            print( self.get_solution() )
         else:
             raise ValueError( "I don't understand that command." )
         
