@@ -14,3 +14,11 @@ Here is a c++ solver, but it has a gui, so I don't know if it counts.
 10/02/2025
 Here is a python solver which is not optimal but it is fast:
 https://pypi.org/project/kociemba/
+
+I got it integrated.  Now the solver works with my cube!! And the commands work as well.  Now the next part is to produce the sentence encoder.
+I suppose getting the cube into the sentence is first and then decoding the cube second.  Because if I don't have a cube to decode, it makes decoding pointless.
+
+Ok, the decoder that I had is here:
+https://photos.google.com/search/Cg5pbWFnZSBvZiBwYXBlciIQCg5pbWFnZSBvZiBwYXBlcijC4cGvmjM%3D/photo/AF1QipMVUs3M5-QVYfK5TPhtqa7P7ZoIMGcPkO6xokPA
+
+Ok, making the huffy_code.py file but the tree inversion step is having gass and I am running out the door now and can not solve it.
