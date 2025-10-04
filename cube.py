@@ -7,9 +7,7 @@ import kociemba
 BY_3_NUM_ROTATIONS = 4
 
 BY_3_NUM_CORNERS = 8
-BY_3_NUM_CORNERS_RESERVED = 1
 BY_3_NUM_EDGES = 4*3
-BY_3_NUM_EDGES_RESERVED = 2
 BY_3_NUM_CORNER_ROTATIONS = 3
 BY_3_NUM_EDGE_ROTATIONS = 2
 
@@ -42,7 +40,7 @@ BY_3_EDGE_LOCATIONS = [
 ]
 
 
-def numberToLocations( number, extra_number ):
+def numberToLocations( number ):
     number_left = number
 
     #determine the locations of the corners.
@@ -60,8 +58,7 @@ def numberToLocations( number, extra_number ):
 
     #determine the angle of the corners.
     corner_angle = [-1 for i in range(BY_3_NUM_CORNERS)]
-    for i in range(BY_3_NUM_CORNERS-BY_3_NUM_CORNERS_RESERVED):
-        #The last corner needs to be twisted until everything fits.
+    for i in range(BY_3_NUM_CORNERS):
         corner_angle[i] = number_left % BY_3_NUM_CORNER_ROTATIONS
         number_left = number_left // BY_3_NUM_CORNER_ROTATIONS
 
@@ -80,21 +77,64 @@ def numberToLocations( number, extra_number ):
 
     #determine the angle of the edges.
     edge_angle = [-1 for i in range(BY_3_NUM_EDGES)]
-    for i in range(BY_3_NUM_EDGES-BY_3_NUM_EDGES_RESERVED):
+    for i in range(BY_3_NUM_EDGES):
         edge_angle[i] = number_left % BY_3_NUM_EDGE_ROTATIONS
         number_left = number_left // BY_3_NUM_EDGE_ROTATIONS
 
 
-    #use the extra_number to set the last corner and edges.
-    number_left = extra_number
-    corner_angle[-1] = number_left % BY_3_NUM_CORNER_ROTATIONS
-    number_left = number_left // BY_3_NUM_CORNER_ROTATIONS
-    edge_angle[-2] = number_left % BY_3_NUM_EDGE_ROTATIONS
-    number_left = number_left // BY_3_NUM_EDGE_ROTATIONS
-    edge_angle[-1] = number_left % BY_3_NUM_EDGE_ROTATIONS
-    number_left = number_left // BY_3_NUM_EDGE_ROTATIONS
 
     return corner_selection, corner_angle, edge_selection, edge_angle
+
+def locationsToNumber( corner_selection, corner_angle, edge_selection, edge_angle ):
+    number = 0
+    #come from the angle of the edges.
+    for i in range( BY_3_NUM_EDGES-1, -1, -1 ):
+        number *= BY_3_NUM_EDGE_ROTATIONS
+        number += edge_angle[i]
+
+    #now utilize the location of the edges.
+    for i in range( BY_3_NUM_EDGES-1, -1, -1 ):
+        spots_left = BY_3_NUM_EDGES - i
+        #add up the indexes before it that would be blank during population.
+        found_it = False
+        would_be_blanks_found = 0
+        search_index = 0
+        while search_index < len( edge_selection ) and not found_it:
+            if edge_selection[search_index] == i:
+                found_it = True
+            elif edge_selection[search_index] > i:
+                would_be_blanks_found += 1
+            search_index += 1
+        assert found_it, "Didn't find edge in edge_selection"
+
+        number *= spots_left
+        number += would_be_blanks_found
+
+    #now utilize the angle of the corners.
+    for i in range( BY_3_NUM_CORNERS-1, -1, -1 ):
+        number *= BY_3_NUM_CORNER_ROTATIONS
+        number += corner_angle[i]
+
+    #now utilize the location of the corners.
+    for i in range( BY_3_NUM_CORNERS-1, -1, -1 ):
+        spots_left = BY_3_NUM_CORNERS - i
+        #add up the indexes before it that would be blank during population.
+        found_it = False
+        would_be_blanks_found = 0
+        search_index = 0
+        while search_index < len( corner_selection ) and not found_it:
+            if corner_selection[search_index] == i:
+                found_it = True
+            elif corner_selection[search_index] > i:
+                would_be_blanks_found += 1
+            search_index += 1
+        assert found_it, "Didn't find corner in corner_selection"
+
+        number *= spots_left
+        number += would_be_blanks_found
+
+    return number
+
 
 def locations_to_cube( corner_selection, corner_angle, edge_selection, edge_angle ):
     from_cube = Cube( 3 )
@@ -148,21 +188,145 @@ def locations_to_cube( corner_selection, corner_angle, edge_selection, edge_angl
 
     return to_cube
 
+def cube_to_locations( cube ):
+    #I am not reconstructing the number yet, so I don't have to do it in reverse,
+    #I just have to find where each cube and edge ran off to.
+
+    reference_cube = Cube( 3 )
+
+    reference_lines_split = reference_cube.lines.split( "\n" )
+    cube_lines_split = cube.lines.split( "\n" )
+
+
+    corner_selection = []
+    corner_angle = []
+    edge_selection = []
+    edge_angle = []
+
+    for i_cube in range( BY_3_NUM_CORNERS ):
+        #search through all the locations and angles to figure out
+        #where i_cube is at.
+        pos_search = 0
+        found_it = False
+        while pos_search < BY_3_NUM_CORNERS and not found_it:
+            angle_search = 0
+            while angle_search < BY_3_NUM_CORNER_ROTATIONS and not found_it:
+                angle_index_search = 0
+                is_this_one = True
+                while angle_index_search < BY_3_NUM_CORNER_ROTATIONS and is_this_one:
+
+                    effected_out_angle = angle_search + angle_index_search
+                    if effected_out_angle >= BY_3_NUM_CORNER_ROTATIONS:
+                        effected_out_angle -= BY_3_NUM_CORNER_ROTATIONS
+
+                    from_x = BY_3_CORNER_LOCATIONS[i_cube][angle_index_search][0]
+                    from_y = BY_3_CORNER_LOCATIONS[i_cube][angle_index_search][1]
+
+                    to_x = BY_3_CORNER_LOCATIONS[pos_search][effected_out_angle][0]
+                    to_y = BY_3_CORNER_LOCATIONS[pos_search][effected_out_angle][1]
+
+                    if cube_lines_split[to_y][to_x] != reference_lines_split[from_y][from_x]:
+                        is_this_one = False
+                    else:
+                        angle_index_search += 1
+                if is_this_one:
+                    found_it = True
+                else:
+                    angle_search += 1
+            if not found_it:
+                pos_search += 1
+
+        assert found_it, f"Couldn't find corner {i_cube}"
+
+        corner_selection.append( pos_search )
+        corner_angle.append( angle_search )
+
+
+    for i_edge in range( BY_3_NUM_EDGES ):
+        #search through all the locations and angles to figure out
+        #where i_edge is at.
+        pos_search = 0
+        found_it = False
+        while pos_search < BY_3_NUM_EDGES and not found_it:
+            angle_search = 0
+            while angle_search < BY_3_NUM_EDGE_ROTATIONS and not found_it:
+                angle_index_search = 0
+                is_this_one = True
+                while angle_index_search < BY_3_NUM_EDGE_ROTATIONS and is_this_one:
+
+                    effected_out_angle = angle_search + angle_index_search
+                    if effected_out_angle >= BY_3_NUM_EDGE_ROTATIONS:
+                        effected_out_angle -= BY_3_NUM_EDGE_ROTATIONS
+
+                    from_x = BY_3_EDGE_LOCATIONS[i_edge][angle_index_search][0]
+                    from_y = BY_3_EDGE_LOCATIONS[i_edge][angle_index_search][1]
+
+                    to_x = BY_3_EDGE_LOCATIONS[pos_search][effected_out_angle][0]
+                    to_y = BY_3_EDGE_LOCATIONS[pos_search][effected_out_angle][1]
+
+                    if cube_lines_split[to_y][to_x] != reference_lines_split[from_y][from_x]:
+                        is_this_one = False
+                    else:
+                        angle_index_search += 1
+                if is_this_one:
+                    found_it = True
+                else:
+                    angle_search += 1
+            if not found_it:
+                pos_search += 1
+
+        assert found_it, f"Couldn't find edge {i_edge}"
+
+        edge_selection.append( pos_search )
+        edge_angle.append( angle_search )
+
+    return corner_selection, corner_angle, edge_selection, edge_angle
+
+                
+
+
 
 def numberToCube( number ):
 
+    found_it = False
     for extra_number in range( 12 ):
-        corner_selection, corner_angle, edge_selection, edge_angle = numberToLocations( number, extra_number )
+        number_with_extra = number*12 + extra_number
+        corner_selection, corner_angle, edge_selection, edge_angle = numberToLocations( number_with_extra )
         to_cube = locations_to_cube( corner_selection, corner_angle, edge_selection, edge_angle )
         try:
             #print( to_cube )
             to_cube.get_solution()
+            #print( f" {number}:{extra_number}" )
+            found_it = True
             return to_cube
         except:
             pass
 
-    assert False, "no solution found"
+    assert found_it, "no solution found"
 
+
+def test_cube_to_locations():
+    for _ in range( 10000 ):
+        i = random.randint( 0, 43252003274489855999 )
+
+        corner_selection, corner_angle, edge_selection, edge_angle = numberToLocations( i )
+        cube = locations_to_cube( corner_selection, corner_angle, edge_selection, edge_angle )
+        corner_selection2, corner_angle2, edge_selection2, edge_angle2 = cube_to_locations( cube )
+        assert corner_selection == corner_selection2, f"{corner_selection} != {corner_selection2}"
+        assert corner_angle == corner_angle2, f"{corner_angle} != {corner_angle2}"
+        assert edge_selection == edge_selection2, f"{edge_selection} != {edge_selection2}"
+        assert edge_angle == edge_angle2, f"{edge_angle} != {edge_angle2}"
+        reconstructed_number = locationsToNumber( corner_selection2, corner_angle2, edge_selection2, edge_angle2 )
+
+        assert i == reconstructed_number, f"{i} != {reconstructed_number}"
+
+    print( "passed" )
+
+def cubeToNumber( cube ):
+    corner_selection, corner_angle, edge_selection, edge_angle = cube_to_locations( cube )
+    number_with_extra = locationsToNumber( corner_selection, corner_angle, edge_selection, edge_angle )
+    number_without_extra = number_with_extra // 12
+    return number_without_extra
 
 class Cube:
     X_AXIS = 0
@@ -517,12 +681,13 @@ def main( size=3 ):
 
 if __name__ == "__main__":
     #main()
-    for i in range( 100 ):
-        try:
-            cube = numberToCube( i )
-            print( f"{i} yes" )
-        except:
-            print( f"{i} no" )
+    # for i in range( 100 ):
+    #     try:
+    #         cube = numberToCube( i )
+    #         print( f"{i} yes" )
+    #     except:
+    #         print( f"{i} no" )
     # cube = numberToCube( 1 )
     # print( cube )
     # print( cube.get_solution() )
+    test_cube_to_locations()
