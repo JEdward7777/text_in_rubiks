@@ -235,6 +235,10 @@ def locations_to_cube( corner_selection, corner_angle, edge_selection, edge_angl
     return to_cube
 
 def cube_to_locations( cube ):
+    #going to throw away the informatino of the cube being rotated without slices
+    #because that information gets lost just handing the cube.
+    _, cube = cube.get_presolution()
+
     #I am not reconstructing the number yet, so I don't have to do it in reverse,
     #I just have to find where each cube and edge ran off to.
 
@@ -542,29 +546,7 @@ class Cube:
 
         return self
 
-    def get_solution( self ):
-        assert self.size == 3, "Solve only for 3x3x3 cube"
-
-        location_names = [x.strip() for x in "U1, U2, U3, U4, U5, U6, U7, U8, U9, R1, R2, R3, R4, R5, R6, R7, R8, R9, F1, F2, F3, F4, F5, F6, F7, F8, F9, D1, D2, D3, D4, D5, D6, D7, D8, D9, L1, L2, L3, L4, L5, L6, L7, L8, L9, B1, B2, B3, B4, B5, B6, B7, B8, B9".split( "," )]
-        location_spots = {
-                                               "U1": (3,0), "U2": (4,0), "U3": (5,0),
-                                               "U4": (3,1), "U5": (4,1), "U6": (5,1),
-                                               "U7": (3,2), "U8": (4,2), "U9": (5,2),
-        "L1": (0,3), "L2": (1,3), "L3": (2,3), "F1": (3,3), "F2": (4,3), "F3": (5,3), "R1": (6,3), "R2": (7,3), "R3": (8,3), "B1": (9,3), "B2": (10,3), "B3": (11,3),
-        "L4": (0,4), "L5": (1,4), "L6": (2,4), "F4": (3,4), "F5": (4,4), "F6": (5,4), "R4": (6,4), "R5": (7,4), "R6": (8,4), "B4": (9,4), "B5": (10,4), "B6": (11,4),
-        "L7": (0,5), "L8": (1,5), "L9": (2,5), "F7": (3,5), "F8": (4,5), "F9": (5,5), "R7": (6,5), "R8": (7,5), "R9": (8,5), "B7": (9,5), "B8": (10,5), "B9": (11,5),
-                                               "D1": (3,6), "D2": (4,6), "D3": (5,6),
-                                               "D4": (3,7), "D5": (4,7), "D6": (5,7),
-                                               "D7": (3,8), "D8": (4,8), "D9": (5,8),
-        }
-        color_map = {
-                      "y": "U",
-            "b": "L", "r": "F", "g": "R", "o": "B",
-                      "w": "D",
-        }
-
-        #before we can use kociemba, we need to rotate the cube with yellow face up and red in the front.
-
+    def get_presolution( self ):
         cube_copy = self.clone()
 
         #get the y face on top
@@ -591,6 +573,33 @@ class Cube:
             for i in range( 3 ):
                 cube_copy.rotate( Cube.X_AXIS, slice_n=i, distance=1 )
                 cube_copy.rotate( Cube.X_AXIS, slice_n=i, distance=1 )
+
+        return presolution, cube_copy
+
+    def get_kociemba_string( self ):
+        assert self.size == 3, "Solve only for 3x3x3 cube"
+
+        location_names = [x.strip() for x in "U1, U2, U3, U4, U5, U6, U7, U8, U9, R1, R2, R3, R4, R5, R6, R7, R8, R9, F1, F2, F3, F4, F5, F6, F7, F8, F9, D1, D2, D3, D4, D5, D6, D7, D8, D9, L1, L2, L3, L4, L5, L6, L7, L8, L9, B1, B2, B3, B4, B5, B6, B7, B8, B9".split( "," )]
+        location_spots = {
+                                               "U1": (3,0), "U2": (4,0), "U3": (5,0),
+                                               "U4": (3,1), "U5": (4,1), "U6": (5,1),
+                                               "U7": (3,2), "U8": (4,2), "U9": (5,2),
+        "L1": (0,3), "L2": (1,3), "L3": (2,3), "F1": (3,3), "F2": (4,3), "F3": (5,3), "R1": (6,3), "R2": (7,3), "R3": (8,3), "B1": (9,3), "B2": (10,3), "B3": (11,3),
+        "L4": (0,4), "L5": (1,4), "L6": (2,4), "F4": (3,4), "F5": (4,4), "F6": (5,4), "R4": (6,4), "R5": (7,4), "R6": (8,4), "B4": (9,4), "B5": (10,4), "B6": (11,4),
+        "L7": (0,5), "L8": (1,5), "L9": (2,5), "F7": (3,5), "F8": (4,5), "F9": (5,5), "R7": (6,5), "R8": (7,5), "R9": (8,5), "B7": (9,5), "B8": (10,5), "B9": (11,5),
+                                               "D1": (3,6), "D2": (4,6), "D3": (5,6),
+                                               "D4": (3,7), "D5": (4,7), "D6": (5,7),
+                                               "D7": (3,8), "D8": (4,8), "D9": (5,8),
+        }
+        color_map = {
+                      "y": "U",
+            "b": "L", "r": "F", "g": "R", "o": "B",
+                      "w": "D",
+        }
+
+        #before we can use kociemba, we need to rotate the cube with yellow face up and red in the front.
+
+        presolution, cube_copy = self.get_presolution()
         
         lines_split = cube_copy.lines.split( "\n" )
 
@@ -618,8 +627,17 @@ class Cube:
             current_name = color_map[current_color]
             current_string += current_name
 
+        return presolution, current_string
+
+    def get_solution( self ):
+        presolution, current_string = self.get_kociemba_string()
         return presolution + kociemba.solve( current_string )
 
+    def get_reverse_solution( self ):
+        normal_string = Cube(size=3).get_kociemba_string()[1]
+        current_string = self.get_kociemba_string()[1]
+
+        return kociemba.solve( normal_string, current_string )
 
     def do_command( self, command ):
         done = False
@@ -697,6 +715,9 @@ class Cube:
             self.scramble( talk=True )
         elif command == "solve":
             print( self.get_solution() )
+        elif command == "reverse solve":
+            print( "yellow on top and red in front" )
+            print( self.get_reverse_solution() )
         elif command == "set":
             lines = []
             read_line = input( "" )
@@ -706,7 +727,7 @@ class Cube:
             size = int(len( lines ) / 3)
             self.size = size
             self.lines = "\n".join( lines )
-        elif command == "to string":
+        elif command == "to string" or command == "get string":
             print( cubeToString( self ) )
         elif command == "from string" or command == "set string":
             string = input( "? " )
