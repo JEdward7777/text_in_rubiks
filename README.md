@@ -4,25 +4,22 @@ A Streamlit web application that encodes short strings into Rubik's cube configu
 
 ## Features
 
-- **🎨 Colorful Cube Visualization**: Beautiful visual representation with colored squares
+- **🎨 Colorful Cube Visualization**: Basic cube visualization
 - **📝 String Encoding**: Convert text into unique cube configurations
 - **📤 String Extraction**: Retrieve encoded text from cube states
 - **🎯 Solve Functionality**: Get solution steps to solve any cube configuration
 - **🔄 Reverse Solve**: Get steps to reach a specific scrambled state from solved
 - **🎲 Interactive Controls**: Scramble and reset cube states
-- **⚠️ Smart Validation**: Warns about string length limits while allowing experimentation
 
 ## How It Works
 
 The application uses Huffman compression to convert strings into numbers, which are then mapped to valid Rubik's cube configurations. This creates a unique cube state for each input string.
 
-**Recommended string length**: 12-15 characters maximum for optimal encoding.
-
 ## Installation & Local Setup
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/JEdward7777/text_in_rubiks
    cd virtual_rubiks
    ```
 
