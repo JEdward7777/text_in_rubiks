@@ -24,23 +24,17 @@ def get_color_style(color_char):
     return color_map.get(color_char.lower(), '#CCCCCC')
 
 def display_cube(cube, editable=False):
-    """Display the cube with colors using minimal gap columns"""
-    lines = cube.lines.split('\n')
-    
-    st.markdown("### Current Cube State")
-    
+    """Display the cube: 2D grid for paint mode, 3D Plotly for normal mode"""
     if editable and 'active_color' in st.session_state:
+        st.markdown("### Current Cube State")
         st.info("🎨 Paint mode active! Click on squares to change their color.")
-    
-    # Use columns with minimal gap for both modes
-    for row_idx, line in enumerate(lines):
-        cols = st.columns(len(line) if line else 1, gap="small")
-        for col_idx, char in enumerate(line):
-            if col_idx < len(cols):
-                color = get_color_style(char)
-                if char != ' ':
-                    if editable and 'active_color' in st.session_state:
-                        # Make clickable for editing
+        lines = cube.lines.split('\n')
+        for row_idx, line in enumerate(lines):
+            cols = st.columns(len(line) if line else 1, gap="small")
+            for col_idx, char in enumerate(line):
+                if col_idx < len(cols):
+                    color = get_color_style(char)
+                    if char != ' ':
                         button_key = f"cube_{row_idx}_{col_idx}"
                         if cols[col_idx].button(
                             char,
@@ -48,11 +42,9 @@ def display_cube(cube, editable=False):
                             help=f"Click to paint with {st.session_state.active_color}",
                             use_container_width=True
                         ):
-                            # Update the cube state
                             update_cube_square(row_idx, col_idx, st.session_state.active_color)
                             st.rerun()
                     else:
-                        # Regular display with minimal styling
                         cols[col_idx].markdown(
                             f"""<div style='
                                 background-color: {color};
@@ -68,6 +60,80 @@ def display_cube(cube, editable=False):
                         )
                 else:
                     cols[col_idx].markdown("<div style='padding: 8px; margin: 0;'>&nbsp;</div>", unsafe_allow_html=True)
+    else:
+        st.markdown("### 3D Cube Visualization")
+        plotly_cube(cube)
+
+def plotly_cube(cube):
+    """Display a 3D Rubik's Cube using Plotly"""
+    import plotly.graph_objects as go
+    import numpy as np
+    # Cube face colors
+    color_map = {
+        'r': '#FF0000', 'g': '#00FF00', 'b': '#0000FF', 'y': '#FFFF00', 'w': '#FFFFFF', 'o': '#FFA500', ' ': '#CCCCCC'
+    }
+    # Get cube state as 6 faces (each 3x3)
+    faces = cube.get_faces() if hasattr(cube, 'get_faces') else None
+    if not faces:
+        st.warning("3D visualization not available for this cube format.")
+        return
+    # Face positions: U, D, F, B, L, R
+    face_offsets = {
+        'U': (0, 1, 0), 'D': (0, -1, 0), 'F': (0, 0, 1), 'B': (0, 0, -1), 'L': (-1, 0, 0), 'R': (1, 0, 0)
+    }
+    data = []
+    for face_name, squares in faces.items():
+        dx, dy, dz = face_offsets[face_name]
+        for i in range(3):
+            for j in range(3):
+                # Position each square
+                x = dx + (i-1)*0.32 if face_name in ['U','D'] else dx
+                y = dy + (j-1)*0.32 if face_name in ['L','R'] else dy
+                z = dz + (i-1)*0.32 if face_name in ['F','B'] else dz
+                # For U/D, vary x/y; F/B, vary x/z; L/R, vary y/z
+                if face_name == 'U':
+                    x = (i-1)*0.32
+                    y = (j-1)*0.32
+                    z = 1.01
+                elif face_name == 'D':
+                    x = (i-1)*0.32
+                    y = (j-1)*0.32
+                    z = -1.01
+                elif face_name == 'F':
+                    x = (i-1)*0.32
+                    y = 1.01
+                    z = (j-1)*0.32
+                elif face_name == 'B':
+                    x = (i-1)*0.32
+                    y = -1.01
+                    z = (j-1)*0.32
+                elif face_name == 'L':
+                    x = -1.01
+                    y = (i-1)*0.32
+                    z = (j-1)*0.32
+                elif face_name == 'R':
+                    x = 1.01
+                    y = (i-1)*0.32
+                    z = (j-1)*0.32
+                color = color_map.get(squares[i][j], '#CCCCCC')
+                data.append(go.Scatter3d(
+                    x=[x], y=[y], z=[z],
+                    mode='markers',
+                    marker=dict(size=32, color=color, symbol='square'),
+                    showlegend=False
+                ))
+    fig = go.Figure(data=data)
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            zaxis=dict(visible=False),
+            aspectmode='cube',
+        ),
+        margin=dict(l=0, r=0, b=0, t=0),
+        height=500
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 def update_cube_square(row_idx, col_idx, new_color):
     """Update a specific square in the cube"""
