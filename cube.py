@@ -706,6 +706,13 @@ class Cube:
             size = int(len( lines ) / 3)
             self.size = size
             self.lines = "\n".join( lines )
+        elif command == "to string":
+            print( cubeToString( self ) )
+        elif command == "from string" or command == "set string":
+            string = input( "? " )
+            string_cube = stringToCube( string )
+            self.size = string_cube.size
+            self.lines = string_cube.lines
         else:
             raise ValueError( "I don't understand that command." )
         
@@ -740,6 +747,15 @@ def main( size=3 ):
     # print( "Done" )
 
 
+def stringToCube( string ):
+    as_number = huffy_code.to_number( string )
+    if as_number >= 43252003274489856000: print( "string too long" )
+    return numberToCube( as_number )
+
+def cubeToString( cube ):
+    as_number = cubeToNumber( cube )
+    return huffy_code.from_number( as_number )
+
 def test_sentence_to_cube_and_back():
     string = "i love jesus"
     as_number = huffy_code.to_number( string )
@@ -765,10 +781,9 @@ def testNumberToCubeSolvability():
             print( f"{i} no" )
 
 if __name__ == "__main__":
-    sam = "l2n"
-    #main()
+    main()
     # cube = numberToCube( 1 )
     # print( cube )
     # print( cube.get_solution() )
     #test_cube_to_locations()
-    test_sentence_to_cube_and_back()
+    #test_sentence_to_cube_and_back()
