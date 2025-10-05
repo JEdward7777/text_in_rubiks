@@ -24,7 +24,7 @@ def get_color_style(color_char):
     return color_map.get(color_char.lower(), '#CCCCCC')
 
 def display_cube(cube, editable=False):
-    """Display the cube with colors using Streamlit columns"""
+    """Display the cube with colors using minimal gap columns"""
     lines = cube.lines.split('\n')
     
     st.markdown("### Current Cube State")
@@ -32,9 +32,9 @@ def display_cube(cube, editable=False):
     if editable and 'active_color' in st.session_state:
         st.info("🎨 Paint mode active! Click on squares to change their color.")
     
-    # Use a simple text-based approach with colored backgrounds
+    # Use columns with minimal gap for both modes
     for row_idx, line in enumerate(lines):
-        cols = st.columns(len(line) if line else 1)
+        cols = st.columns(len(line) if line else 1, gap="small")
         for col_idx, char in enumerate(line):
             if col_idx < len(cols):
                 color = get_color_style(char)
@@ -52,7 +52,7 @@ def display_cube(cube, editable=False):
                             update_cube_square(row_idx, col_idx, st.session_state.active_color)
                             st.rerun()
                     else:
-                        # Regular display
+                        # Regular display with minimal styling
                         cols[col_idx].markdown(
                             f"""<div style='
                                 background-color: {color};
@@ -62,11 +62,12 @@ def display_cube(cube, editable=False):
                                 border: 1px solid #000;
                                 font-family: monospace;
                                 font-weight: bold;
+                                margin: 0;
                             '>{char}</div>""",
                             unsafe_allow_html=True
                         )
                 else:
-                    cols[col_idx].markdown("<div style='padding: 8px;'>&nbsp;</div>", unsafe_allow_html=True)
+                    cols[col_idx].markdown("<div style='padding: 8px; margin: 0;'>&nbsp;</div>", unsafe_allow_html=True)
 
 def update_cube_square(row_idx, col_idx, new_color):
     """Update a specific square in the cube"""

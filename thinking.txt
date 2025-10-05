@@ -30,3 +30,7 @@ Looking at what is messed up, I don't think I messed the code up, I think there 
 10/04/2025
 I got it to the point where I can convert the number to cube and back again, but I ran into a problem.  I can't just scan through 12 ajacent numbers for a solvable cube because they are not evenly distributed and I ran into a location where there isn't a nearby solvable cube.
 So I am going to check in how I have it and then see about changing the order of operations so that possibly the distribution is better.
+
+10/05/2025
+I vibecoded a streamlit app front end.  I was going to create a github repo, but I didn't push to it yet because I ran out of time.
+https://github.com/JEdward7777/text_in_rubiks
