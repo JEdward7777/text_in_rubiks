@@ -175,6 +175,8 @@ def initialize_session_state():
         st.session_state.cube = Cube(3)
     if 'last_reverse_solution' not in st.session_state:
         st.session_state.last_reverse_solution = ""
+    if 'warning_message' not in st.session_state:
+        st.session_state.warning_message = ""
 
 def main():
     st.title("🧩 Virtual Rubik's Cube - String Encoder")
@@ -206,6 +208,10 @@ def main():
         st.markdown("#### 📝 Set String")
         input_string = st.text_input("Enter string to encode:", key="string_input")
         
+        # Show persistent warning if exists
+        if st.session_state.warning_message:
+            st.warning(st.session_state.warning_message)
+        
         if st.button("Set String", type="primary"):
             if input_string.strip():
                 try:
@@ -214,8 +220,9 @@ def main():
                     max_number = 43252003274489856000
                     
                     if as_number >= max_number:
-                        st.warning(f"⚠️ Warning: String is too long! (Number: {as_number:,})")
-                        st.write("Proceeding anyway to show result...")
+                        st.session_state.warning_message = f"⚠️ Warning: String '{input_string}' is too long! (Number: {as_number:,}) - Proceeding anyway to show result."
+                    else:
+                        st.session_state.warning_message = ""  # Clear warning
                     
                     # Convert string to cube
                     st.session_state.cube = stringToCube(input_string)
@@ -231,6 +238,7 @@ def main():
                     
                 except Exception as e:
                     st.error(f"Error encoding string: {str(e)}")
+                    st.session_state.warning_message = ""  # Clear warning on error
             else:
                 st.error("Please enter a string to encode")
         
@@ -272,12 +280,14 @@ def main():
             if st.button("🎲 Scramble"):
                 st.session_state.cube.scramble()
                 st.session_state.last_reverse_solution = ""
+                st.session_state.warning_message = ""  # Clear warnings
                 st.rerun()
         
         with col_b:
             if st.button("🔄 Reset"):
                 st.session_state.cube = Cube(3)
                 st.session_state.last_reverse_solution = ""
+                st.session_state.warning_message = ""  # Clear warnings
                 st.rerun()
     
     # Information section
@@ -308,8 +318,6 @@ def main():
     st.markdown("""
     **Cube Solving Library:** This application uses the [kociemba library](https://github.com/muodov/kociemba)
     for Rubik's cube solving, implemented by Daniil Kazantsev.
-    
-    **Original Cube Implementation:** Custom Rubik's cube engine with string encoding capabilities.
     """)
 
 if __name__ == "__main__":
