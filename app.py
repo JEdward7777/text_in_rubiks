@@ -79,62 +79,94 @@ def update_cube_square(row_idx, col_idx, new_color):
 
 def create_color_palette():
     """Create a color palette for painting the cube"""
-    st.markdown("#### 🎨 Cube Editor")
+    paint_mode = st.session_state.get('paint_mode', False)
     
-    # Color options
-    colors = {
-        'Red': 'r',
-        'Green': 'g',
-        'Blue': 'b',
-        'Yellow': 'y',
-        'White': 'w',
-        'Orange': 'o'
-    }
-    
-    # Create color selection buttons
-    cols = st.columns(6)
-    for i, (color_name, color_char) in enumerate(colors.items()):
-        color_style = get_color_style(color_char)
-        with cols[i]:
-            if st.button(
-                color_name,
-                key=f"color_{color_char}",
-                help=f"Select {color_name} as active color",
-                use_container_width=True
-            ):
-                st.session_state.active_color = color_char
-                st.rerun()
-    
-    # Show active color
-    if 'active_color' in st.session_state:
-        active_color_style = get_color_style(st.session_state.active_color)
-        active_name = [name for name, char in colors.items() if char == st.session_state.active_color][0]
-        st.markdown(
-            f"""<div style='
-                background-color: {active_color_style};
-                color: {'black' if st.session_state.active_color in ['y', 'w'] else 'white'};
-                text-align: center;
-                padding: 10px;
-                border: 2px solid #000;
-                font-weight: bold;
-                margin: 10px 0;
-            '>Active Color: {active_name}</div>""",
-            unsafe_allow_html=True
-        )
-    
-    # Editor controls
-    col_a, col_b = st.columns(2)
-    with col_a:
+    if paint_mode:
+        st.markdown("#### 🎨 Cube Editor")
+        
+        # Color options
+        colors = {
+            'Red': 'r',
+            'Green': 'g',
+            'Blue': 'b',
+            'Yellow': 'y',
+            'White': 'w',
+            'Orange': 'o'
+        }
+        
+        # Create color selection buttons
+        cols = st.columns(6)
+        for i, (color_name, color_char) in enumerate(colors.items()):
+            color_style = get_color_style(color_char)
+            with cols[i]:
+                if st.button(
+                    color_name,
+                    key=f"color_{color_char}",
+                    help=f"Select {color_name} as active color",
+                    use_container_width=True
+                ):
+                    st.session_state.active_color = color_char
+                    st.rerun()
+        
+        # Show active color
+        if 'active_color' in st.session_state:
+            active_color_style = get_color_style(st.session_state.active_color)
+            active_name = [name for name, char in colors.items() if char == st.session_state.active_color][0]
+            st.markdown(
+                f"""<div style='
+                    background-color: {active_color_style};
+                    color: {'black' if st.session_state.active_color in ['y', 'w'] else 'white'};
+                    text-align: center;
+                    padding: 10px;
+                    border: 2px solid #000;
+                    font-weight: bold;
+                    margin: 10px 0;
+                '>Active Color: {active_name}</div>""",
+                unsafe_allow_html=True
+            )
+        
+        # Exit paint mode
+        if st.button("👁️ Exit Paint Mode", use_container_width=True):
+            if 'paint_mode' in st.session_state:
+                del st.session_state.paint_mode
+            st.rerun()
+    else:
+        # Show manual rotation controls when not in paint mode
+        st.markdown("#### 🔄 Manual Rotations")
+        
+        # Face rotations
+        st.markdown("**Face Rotations:**")
+        face_cols = st.columns(6)
+        faces = ['U', 'D', 'L', 'R', 'F', 'B']
+        for i, face in enumerate(faces):
+            with face_cols[i]:
+                if st.button(f"{face}", key=f"rot_{face}", help=f"Rotate {face} face clockwise"):
+                    st.session_state.cube.do_command(face)
+                    st.rerun()
+        
+        # Prime rotations
+        st.markdown("**Counter-clockwise:**")
+        prime_cols = st.columns(6)
+        for i, face in enumerate(faces):
+            with prime_cols[i]:
+                if st.button(f"{face}'", key=f"rot_{face}_prime", help=f"Rotate {face} face counter-clockwise"):
+                    st.session_state.cube.do_command(f"{face}'")
+                    st.rerun()
+        
+        # Double rotations
+        st.markdown("**Double rotations:**")
+        double_cols = st.columns(6)
+        for i, face in enumerate(faces):
+            with double_cols[i]:
+                if st.button(f"{face}2", key=f"rot_{face}_2", help=f"Rotate {face} face 180°"):
+                    st.session_state.cube.do_command(f"{face}2")
+                    st.rerun()
+        
+        # Enter paint mode
         if st.button("🎨 Enter Paint Mode", use_container_width=True):
             if 'active_color' not in st.session_state:
                 st.session_state.active_color = 'r'  # Default to red
             st.session_state.paint_mode = True
-            st.rerun()
-    
-    with col_b:
-        if st.button("👁️ Exit Paint Mode", use_container_width=True):
-            if 'paint_mode' in st.session_state:
-                del st.session_state.paint_mode
             st.rerun()
 
 def initialize_session_state():
@@ -285,8 +317,8 @@ def main():
     st.markdown("---")
     st.markdown("### 🙏 Acknowledgments")
     st.markdown("""
-    **Cube Solving Algorithm:** This application uses the [Kociemba algorithm](https://github.com/muodov/kociemba)
-    for optimal Rubik's cube solving, implemented by Daniil Kazantsev.
+    **Cube Solving Library:** This application uses the [kociemba library](https://github.com/muodov/kociemba)
+    for Rubik's cube solving, implemented by Daniil Kazantsev.
     
     **Original Cube Implementation:** Custom Rubik's cube engine with string encoding capabilities.
     """)
