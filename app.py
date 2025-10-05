@@ -173,12 +173,8 @@ def initialize_session_state():
     """Initialize session state variables"""
     if 'cube' not in st.session_state:
         st.session_state.cube = Cube(3)
-    if 'last_solution' not in st.session_state:
-        st.session_state.last_solution = ""
     if 'last_reverse_solution' not in st.session_state:
         st.session_state.last_reverse_solution = ""
-    if 'last_extracted_string' not in st.session_state:
-        st.session_state.last_extracted_string = ""
 
 def main():
     st.title("🧩 Virtual Rubik's Cube - String Encoder")
@@ -225,7 +221,10 @@ def main():
                     st.session_state.cube = stringToCube(input_string)
                     
                     # Get reverse solution (to reach this scrambled state)
-                    st.session_state.last_reverse_solution = st.session_state.cube.get_reverse_solution()
+                    try:
+                        st.session_state.last_reverse_solution = st.session_state.cube.get_reverse_solution()
+                    except Exception as e:
+                        st.session_state.last_reverse_solution = f"Error: {str(e)}"
                     
                     st.success(f"✅ String '{input_string}' encoded into cube!")
                     st.rerun()
@@ -235,41 +234,35 @@ def main():
             else:
                 st.error("Please enter a string to encode")
         
-        # Get String section
-        st.markdown("#### 📤 Get String")
-        if st.button("Extract String from Cube"):
-            try:
-                extracted = cubeToString(st.session_state.cube)
-                st.session_state.last_extracted_string = extracted
-                if extracted.strip():
-                    st.success(f"📝 Extracted: **{extracted}**")
-                else:
-                    st.info("No string found (cube may be in solved state)")
-            except Exception as e:
-                st.error(f"Error extracting string: {str(e)}")
+        # Always show extracted string
+        st.markdown("#### 📤 Decoded String")
+        try:
+            extracted = cubeToString(st.session_state.cube)
+            if extracted.strip():
+                st.success(f"📝 **{extracted}**")
+                st.code(extracted)
+            else:
+                st.info("No string encoded (cube may be in solved state)")
+        except Exception as e:
+            st.error(f"Error extracting string: {str(e)}")
         
-        if st.session_state.last_extracted_string:
-            st.code(st.session_state.last_extracted_string)
+        # Always show current solution
+        st.markdown("#### 🎯 Current Solution")
+        try:
+            solution = st.session_state.cube.get_solution()
+            if solution.strip():
+                st.markdown("**Steps to solve this cube:**")
+                st.code(solution)
+            else:
+                st.success("✅ Cube is already solved!")
+        except Exception as e:
+            st.error(f"Error getting solution: {str(e)}")
         
-        # Solve section
-        st.markdown("#### 🎯 Solve Cube")
-        if st.button("Get Solution"):
-            try:
-                solution = st.session_state.cube.get_solution()
-                st.session_state.last_solution = solution
-                st.success("Solution found!")
-            except Exception as e:
-                st.error(f"Error getting solution: {str(e)}")
-        
-        if st.session_state.last_solution:
-            st.markdown("**Solution steps:**")
-            st.code(st.session_state.last_solution)
-        
-        # Reverse Solve section
-        st.markdown("#### 🔄 Reverse Solution")
-        st.caption("Shows how to reach the current scrambled state from solved")
+        # Always show reverse solution if available
         if st.session_state.last_reverse_solution:
-            st.markdown("**Steps to reach this state:**")
+            st.markdown("#### 🔄 How to Create This State")
+            st.caption("Steps to reach this state from a solved cube")
+            st.markdown("**Steps from solved cube:**")
             st.code(st.session_state.last_reverse_solution)
         
         # Utility buttons
@@ -279,16 +272,13 @@ def main():
         with col_a:
             if st.button("🎲 Scramble"):
                 st.session_state.cube.scramble()
-                st.session_state.last_solution = ""
                 st.session_state.last_reverse_solution = ""
                 st.rerun()
         
         with col_b:
             if st.button("🔄 Reset"):
                 st.session_state.cube = Cube(3)
-                st.session_state.last_solution = ""
                 st.session_state.last_reverse_solution = ""
-                st.session_state.last_extracted_string = ""
                 st.rerun()
     
     # Information section
