@@ -24,37 +24,32 @@ def get_color_style(color_char):
     return color_map.get(color_char.lower(), '#CCCCCC')
 
 def display_cube(cube):
-    """Display the cube with colors using HTML/CSS"""
+    """Display the cube with colors using Streamlit columns"""
     lines = cube.lines.split('\n')
     
     st.markdown("### Current Cube State")
     
-    # Create HTML for colored cube display
-    html_content = "<div style='font-family: monospace; line-height: 1.2;'>"
-    
+    # Use a simple text-based approach with colored backgrounds
     for line in lines:
-        html_content += "<div style='margin: 2px 0;'>"
-        for char in line:
-            color = get_color_style(char)
-            border_color = '#000000' if char != ' ' else '#CCCCCC'
-            html_content += f"""
-                <span style='
-                    display: inline-block; 
-                    width: 25px; 
-                    height: 25px; 
-                    background-color: {color}; 
-                    border: 1px solid {border_color};
-                    margin: 1px;
-                    text-align: center;
-                    line-height: 23px;
-                    font-size: 12px;
-                    color: {'black' if char in ['y', 'w'] else 'white'};
-                '>{char if char != ' ' else ''}</span>
-            """
-        html_content += "</div>"
-    
-    html_content += "</div>"
-    st.markdown(html_content, unsafe_allow_html=True)
+        cols = st.columns(len(line) if line else 1)
+        for i, char in enumerate(line):
+            if i < len(cols):
+                color = get_color_style(char)
+                if char != ' ':
+                    cols[i].markdown(
+                        f"""<div style='
+                            background-color: {color};
+                            color: {'black' if char in ['y', 'w'] else 'white'};
+                            text-align: center;
+                            padding: 8px;
+                            border: 1px solid #000;
+                            font-family: monospace;
+                            font-weight: bold;
+                        '>{char}</div>""",
+                        unsafe_allow_html=True
+                    )
+                else:
+                    cols[i].markdown("<div style='padding: 8px;'>&nbsp;</div>", unsafe_allow_html=True)
 
 def initialize_session_state():
     """Initialize session state variables"""
