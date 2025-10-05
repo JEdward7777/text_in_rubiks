@@ -239,7 +239,6 @@ def main():
         try:
             extracted = cubeToString(st.session_state.cube)
             if extracted.strip():
-                st.success(f"📝 **{extracted}**")
                 st.code(extracted)
             else:
                 st.info("No string encoded (cube may be in solved state)")
