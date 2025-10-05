@@ -11,6 +11,12 @@ A Streamlit web application that encodes short strings into Rubik's cube configu
 - **🔄 Reverse Solve**: Get steps to reach a specific scrambled state from solved
 - **🎲 Interactive Controls**: Scramble and reset cube states
 
+## 🌐 Try It Live
+
+**[🚀 Try the app now at https://text-in-rubiks.streamlit.app/](https://text-in-rubiks.streamlit.app/)**
+
+No installation required! The application is publicly hosted on Streamlit Community Cloud.
+
 ## How It Works
 
 The application uses Huffman compression to convert strings into numbers, which are then mapped to valid Rubik's cube configurations. This creates a unique cube state for each input string.

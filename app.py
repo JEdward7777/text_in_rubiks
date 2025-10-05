@@ -174,8 +174,6 @@ def initialize_session_state():
     """Initialize session state variables"""
     if 'cube' not in st.session_state:
         st.session_state.cube = Cube(3)
-    if 'last_reverse_solution' not in st.session_state:
-        st.session_state.last_reverse_solution = ""
     if 'warning_message' not in st.session_state:
         st.session_state.warning_message = ""
 
@@ -228,11 +226,6 @@ def main():
                     # Convert string to cube
                     st.session_state.cube = stringToCube(input_string)
                     
-                    # Get reverse solution (to reach this scrambled state)
-                    try:
-                        st.session_state.last_reverse_solution = st.session_state.cube.get_reverse_solution()
-                    except Exception as e:
-                        st.session_state.last_reverse_solution = f"Error: {str(e)}"
                     
                     st.success(f"✅ String '{input_string}' encoded into cube!")
                     st.rerun()
@@ -266,12 +259,18 @@ def main():
         except Exception as e:
             st.error(f"Error getting solution: {str(e)}")
         
-        # Always show reverse solution if available
-        if st.session_state.last_reverse_solution:
-            st.markdown("#### 🔄 How to Create This State")
-            st.caption("Steps to reach this state from a solved cube")
-            st.markdown("**Steps from solved cube:**")
-            st.code(st.session_state.last_reverse_solution)
+        # Always show reverse solution
+        st.markdown("#### 🔄 How to Create This State")
+        st.caption("Steps to reach this state from a solved cube")
+        try:
+            reverse_solution = st.session_state.cube.get_reverse_solution()
+            if reverse_solution.strip():
+                st.markdown("**Steps from solved cube:**")
+                st.code(reverse_solution)
+            else:
+                st.success("✅ Cube is already solved!")
+        except Exception as e:
+            st.error(f"Error getting reverse solution: {str(e)}")
         
         # Utility buttons
         st.markdown("#### 🎲 Cube Actions")
@@ -280,14 +279,12 @@ def main():
         with col_a:
             if st.button("🎲 Scramble"):
                 st.session_state.cube.scramble()
-                st.session_state.last_reverse_solution = ""
                 st.session_state.warning_message = ""  # Clear warnings
                 st.rerun()
         
         with col_b:
             if st.button("🔄 Reset"):
                 st.session_state.cube = Cube(3)
-                st.session_state.last_reverse_solution = ""
                 st.session_state.warning_message = ""  # Clear warnings
                 st.rerun()
     
