@@ -44,13 +44,29 @@ BY_3_EDGE_LOCATIONS = [
 def numberToLocations( number ):
     number_left = number
 
+    #peel off some values off front which helps
+    #with solvablility distribution.
+    last_corner_pos = number_left % 2
+    number_left = number_left // 2
+    last_corner_rotation = number_left % BY_3_NUM_CORNER_ROTATIONS
+    number_left = number_left // BY_3_NUM_CORNER_ROTATIONS
+    last_edge_rotation = number_left % BY_3_NUM_EDGE_ROTATIONS
+    number_left = number_left // BY_3_NUM_EDGE_ROTATIONS
+
     #determine the locations of the corners.
     available_corners = list(range(BY_3_NUM_CORNERS))
     corner_selection = [-1 for i in range(BY_3_NUM_CORNERS)]
     for i in range(BY_3_NUM_CORNERS):
         spots_left = len( available_corners )
-        picked_offset = number_left % spots_left
-        number_left = number_left // spots_left
+
+        if i != BY_3_NUM_CORNERS-2:
+            #munus 2 because the last last location
+            #is degenerate.
+            picked_offset = number_left % spots_left
+            number_left = number_left // spots_left
+        else:
+            #special case for last corner.
+            picked_offset = last_corner_pos
         picked_location = available_corners.pop( picked_offset )
         corner_selection[picked_location] = i
 
@@ -60,8 +76,13 @@ def numberToLocations( number ):
     #determine the angle of the corners.
     corner_angle = [-1 for i in range(BY_3_NUM_CORNERS)]
     for i in range(BY_3_NUM_CORNERS):
-        corner_angle[i] = number_left % BY_3_NUM_CORNER_ROTATIONS
-        number_left = number_left // BY_3_NUM_CORNER_ROTATIONS
+        if i != 0:
+            #All the rotations are the same count so testing for zero
+            #is enough.
+            corner_angle[i] = number_left % BY_3_NUM_CORNER_ROTATIONS
+            number_left = number_left // BY_3_NUM_CORNER_ROTATIONS
+        else:
+            corner_angle[i] = last_corner_rotation
 
     #determine the location of the edges.
     available_edges = list(range(BY_3_NUM_EDGES))
@@ -79,19 +100,28 @@ def numberToLocations( number ):
     #determine the angle of the edges.
     edge_angle = [-1 for i in range(BY_3_NUM_EDGES)]
     for i in range(BY_3_NUM_EDGES):
-        edge_angle[i] = number_left % BY_3_NUM_EDGE_ROTATIONS
-        number_left = number_left // BY_3_NUM_EDGE_ROTATIONS
-
-
+        if i != 0:
+            edge_angle[i] = number_left % BY_3_NUM_EDGE_ROTATIONS
+            number_left = number_left // BY_3_NUM_EDGE_ROTATIONS
+        else:
+            edge_angle[i] = last_edge_rotation
 
     return corner_selection, corner_angle, edge_selection, edge_angle
 
 def locationsToNumber( corner_selection, corner_angle, edge_selection, edge_angle ):
     number = 0
+
+    last_corner_pos = None
+    last_corner_rotation = None
+    last_edge_rotation = None
+
     #come from the angle of the edges.
     for i in range( BY_3_NUM_EDGES-1, -1, -1 ):
-        number *= BY_3_NUM_EDGE_ROTATIONS
-        number += edge_angle[i]
+        if i != 0:
+            number *= BY_3_NUM_EDGE_ROTATIONS
+            number += edge_angle[i]
+        else:
+            last_edge_rotation = edge_angle[i]
 
     #now utilize the location of the edges.
     for i in range( BY_3_NUM_EDGES-1, -1, -1 ):
@@ -113,8 +143,11 @@ def locationsToNumber( corner_selection, corner_angle, edge_selection, edge_angl
 
     #now utilize the angle of the corners.
     for i in range( BY_3_NUM_CORNERS-1, -1, -1 ):
-        number *= BY_3_NUM_CORNER_ROTATIONS
-        number += corner_angle[i]
+        if i != 0:
+            number *= BY_3_NUM_CORNER_ROTATIONS
+            number += corner_angle[i]
+        else:
+            last_corner_rotation = corner_angle[i]
 
     #now utilize the location of the corners.
     for i in range( BY_3_NUM_CORNERS-1, -1, -1 ):
@@ -131,8 +164,20 @@ def locationsToNumber( corner_selection, corner_angle, edge_selection, edge_angl
             search_index += 1
         assert found_it, "Didn't find corner in corner_selection"
 
-        number *= spots_left
-        number += would_be_blanks_found
+        if i != BY_3_NUM_CORNERS-2:
+            number *= spots_left
+            number += would_be_blanks_found
+        else:
+            last_corner_pos = would_be_blanks_found
+
+    number *= BY_3_NUM_EDGE_ROTATIONS
+    number += last_edge_rotation
+
+    number *= BY_3_NUM_CORNER_ROTATIONS
+    number += last_corner_rotation
+
+    number *= 2
+    number += last_corner_pos
 
     return number
 
@@ -287,9 +332,9 @@ def cube_to_locations( cube ):
 
 
 
-def numberToCube( number ):
+def numberToCube( number, talk_skipped=False ):
 
-    found_it = False
+    found_it = None
     for extra_number in range( 12 ):
         number_with_extra = number*12 + extra_number
         corner_selection, corner_angle, edge_selection, edge_angle = numberToLocations( number_with_extra )
@@ -297,16 +342,21 @@ def numberToCube( number ):
         try:
             #print( to_cube )
             to_cube.get_solution()
-            #print( f" {number}:{extra_number}" )
-            found_it = True
-            return to_cube
+            found_it = to_cube
+            if talk_skipped: 
+                print( f" {number}:{extra_number}" )
+            else:
+                return to_cube
         except:
             pass
 
-    assert found_it, "no solution found"
+    assert found_it is not None, "no solution found"
+    return found_it
 
 
 def test_cube_to_locations():
+    #i = 1
+    #if True:
     for _ in range( 10000 ):
         i = random.randint( 0, 43252003274489855999 )
 
@@ -703,14 +753,20 @@ def test_sentence_to_cube_and_back():
     print( "Done" )
 
 
+
+def testNumberToCubeSolvability():
+    random.seed( 0 )
+    for _ in range( 100 ):
+        i = random.randint( 0, 43252003274489855999 )
+        try:
+            cube = numberToCube( i, talk_skipped=True )
+            print( f"{i} yes" )
+        except:
+            print( f"{i} no" )
+
 if __name__ == "__main__":
+    sam = "l2n"
     #main()
-    # for i in range( 100 ):
-    #     try:
-    #         cube = numberToCube( i )
-    #         print( f"{i} yes" )
-    #     except:
-    #         print( f"{i} no" )
     # cube = numberToCube( 1 )
     # print( cube )
     # print( cube.get_solution() )
