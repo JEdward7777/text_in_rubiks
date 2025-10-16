@@ -288,43 +288,43 @@ def main():
                 st.session_state.warning_message = ""  # Clear warnings
                 st.rerun()
         
-        # Cube State Editor - moved to bottom
-        st.markdown("#### 🎯 Raw Cube State")
-        st.caption("Direct view and edit of cube's internal state representation")
-        
-        # Add CSS for monospace font in text area
-        st.markdown("""
-        <style>
-        .stTextArea textarea {
-            font-family: 'Courier New', monospace !important;
-            font-size: 12px !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        # Text area showing current cube lines with monospace font
-        current_lines = st.session_state.cube.lines
-        edited_lines = st.text_area(
-            "Cube State (lines string):",
-            value=current_lines,
-            height=200,
-            key=f"cube_lines_{hash(current_lines)}",
-            help="This shows the internal string representation of the cube state. Each character represents a colored square."
-        )
-        
-        # Set button with descriptive text
-        if st.button(
-            "🔄 Set Cube State",
-            help="Update the cube to match the text above. Use this after editing the cube state manually.",
-            use_container_width=True
-        ):
-            try:
-                # Validate and set the new cube state
-                st.session_state.cube.lines = edited_lines
-                st.success("✅ Cube state updated successfully!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error setting cube state: {str(e)}")
+        # Cube State Editor - moved to bottom and wrapped in expander
+        with st.expander("📋 Raw Cube State"):
+            st.caption("Direct view and edit of cube's internal state representation")
+            
+            # Add CSS for monospace font in text area
+            st.markdown("""
+            <style>
+            .stTextArea textarea {
+                font-family: 'Courier New', monospace !important;
+                font-size: 12px !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
+            # Text area showing current cube lines with monospace font
+            current_lines = st.session_state.cube.lines
+            edited_lines = st.text_area(
+                "Cube State (lines string):",
+                value=current_lines,
+                height=200,
+                key=f"cube_lines_{hash(current_lines)}",
+                help="This shows the internal string representation of the cube state. Each character represents a colored square."
+            )
+            
+            # Set button with descriptive text
+            if st.button(
+                "🔄 Set Cube State",
+                help="Update the cube to match the text above. Use this after editing the cube state manually.",
+                use_container_width=True
+            ):
+                try:
+                    # Validate and set the new cube state
+                    st.session_state.cube.lines = edited_lines
+                    st.success("✅ Cube state updated successfully!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error setting cube state: {str(e)}")
     
     # Information section
     st.markdown("---")
