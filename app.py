@@ -65,70 +65,108 @@ def display_cube(cube, editable=False):
         plotly_cube(cube)
 
 def plotly_cube(cube):
-    """Display a 3D Rubik's Cube using Plotly"""
+    """Display a 3D Rubik's Cube using Plotly with proper 3D mesh surfaces"""
     import plotly.graph_objects as go
     import numpy as np
+    
     # Cube face colors
     color_map = {
         'r': '#FF0000', 'g': '#00FF00', 'b': '#0000FF', 'y': '#FFFF00', 'w': '#FFFFFF', 'o': '#FFA500', ' ': '#CCCCCC'
     }
+    
     # Get cube state as 6 faces (each 3x3)
     faces = cube.get_faces() if hasattr(cube, 'get_faces') else None
     if not faces:
         st.warning("3D visualization not available for this cube format.")
         return
-    # Face positions: U, D, F, B, L, R
-    face_offsets = {
-        'U': (0, 1, 0), 'D': (0, -1, 0), 'F': (0, 0, 1), 'B': (0, 0, -1), 'L': (-1, 0, 0), 'R': (1, 0, 0)
-    }
+    
+    def create_square_mesh(center, normal, size, color):
+        """Create a 3D mesh for a square face"""
+        # Define the square in a local coordinate system
+        if abs(normal[0]) > 0.5:  # X-normal (L/R faces)
+            v1 = np.array([0, -size/2, -size/2])
+            v2 = np.array([0, size/2, -size/2])
+            v3 = np.array([0, size/2, size/2])
+            v4 = np.array([0, -size/2, size/2])
+        elif abs(normal[1]) > 0.5:  # Y-normal (F/B faces)
+            v1 = np.array([-size/2, 0, -size/2])
+            v2 = np.array([size/2, 0, -size/2])
+            v3 = np.array([size/2, 0, size/2])
+            v4 = np.array([-size/2, 0, size/2])
+        else:  # Z-normal (U/D faces)
+            v1 = np.array([-size/2, -size/2, 0])
+            v2 = np.array([size/2, -size/2, 0])
+            v3 = np.array([size/2, size/2, 0])
+            v4 = np.array([-size/2, size/2, 0])
+        
+        # Translate to world position
+        vertices = np.array([v1, v2, v3, v4]) + center
+        
+        return go.Mesh3d(
+            x=vertices[:, 0],
+            y=vertices[:, 1],
+            z=vertices[:, 2],
+            i=[0, 0],  # Triangle 1: vertices 0,1,2
+            j=[1, 2],
+            k=[2, 3],  # Triangle 2: vertices 0,2,3
+            color=color,
+            showscale=False,
+            lighting=dict(ambient=0.3, diffuse=0.8, fresnel=0.1),
+            lightposition=dict(x=100, y=100, z=100),
+            showlegend=False
+        )
+    
     data = []
+    
+    # Define face positions and normals
+    face_configs = {
+        'U': {'normal': [0, 0, 1], 'base_z': 1.5},    # Up face
+        'D': {'normal': [0, 0, -1], 'base_z': -1.5},  # Down face
+        'F': {'normal': [0, 1, 0], 'base_y': 1.5},    # Front face
+        'B': {'normal': [0, -1, 0], 'base_y': -1.5},  # Back face
+        'L': {'normal': [-1, 0, 0], 'base_x': -1.5},  # Left face
+        'R': {'normal': [1, 0, 0], 'base_x': 1.5}     # Right face
+    }
+    
+    square_size = 0.9  # Size of each small square
+    gap = 0.05  # Small gap between squares
+    
     for face_name, squares in faces.items():
-        dx, dy, dz = face_offsets[face_name]
+        config = face_configs[face_name]
+        normal = config['normal']
+        
         for i in range(3):
             for j in range(3):
-                # Position each square
-                x = dx + (i-1)*0.32 if face_name in ['U','D'] else dx
-                y = dy + (j-1)*0.32 if face_name in ['L','R'] else dy
-                z = dz + (i-1)*0.32 if face_name in ['F','B'] else dz
-                # For U/D, vary x/y; F/B, vary x/z; L/R, vary y/z
-                if face_name == 'U':
-                    x = (i-1)*0.32
-                    y = (j-1)*0.32
-                    z = 1.01
-                elif face_name == 'D':
-                    x = (i-1)*0.32
-                    y = (j-1)*0.32
-                    z = -1.01
-                elif face_name == 'F':
-                    x = (i-1)*0.32
-                    y = 1.01
-                    z = (j-1)*0.32
-                elif face_name == 'B':
-                    x = (i-1)*0.32
-                    y = -1.01
-                    z = (j-1)*0.32
-                elif face_name == 'L':
-                    x = -1.01
-                    y = (i-1)*0.32
-                    z = (j-1)*0.32
-                elif face_name == 'R':
-                    x = 1.01
-                    y = (i-1)*0.32
-                    z = (j-1)*0.32
+                # Calculate position for this square
+                # Convert grid coordinates to world coordinates
+                grid_x = (i - 1) * (square_size + gap)
+                grid_y = (j - 1) * (square_size + gap)
+                
+                if face_name in ['U', 'D']:
+                    center = [grid_x, grid_y, config['base_z']]
+                elif face_name in ['F', 'B']:
+                    center = [grid_x, config['base_y'], -grid_y]  # Note: -grid_y for proper orientation
+                else:  # L, R faces
+                    center = [config['base_x'], grid_x, -grid_y]  # Note: -grid_y for proper orientation
+                
                 color = color_map.get(squares[i][j], '#CCCCCC')
-                data.append(go.Scatter3d(
-                    x=[x], y=[y], z=[z],
-                    mode='markers',
-                    marker=dict(size=32, color=color, symbol='square'),
-                    showlegend=False
-                ))
+                
+                # Create the square mesh
+                square_mesh = create_square_mesh(center, normal, square_size, color)
+                data.append(square_mesh)
+    
     fig = go.Figure(data=data)
     fig.update_layout(
         scene=dict(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            zaxis=dict(visible=False),
+            xaxis=dict(visible=False, range=[-2, 2]),
+            yaxis=dict(visible=False, range=[-2, 2]),
+            zaxis=dict(visible=False, range=[-2, 2]),
             aspectmode='cube',
+            camera=dict(
+                eye=dict(x=2, y=2, z=1),
+                center=dict(x=0, y=0, z=0),
+                up=dict(x=0, y=0, z=1)
+            )
         ),
         margin=dict(l=0, r=0, b=0, t=0),
         height=500

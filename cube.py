@@ -740,6 +740,71 @@ class Cube:
         return done
 
 
+    
+    def get_faces(self):
+        """
+        Returns a dictionary of faces where each face is a 3x3 array of color characters.
+        Face names are 'U', 'D', 'L', 'R', 'F', 'B' representing Up, Down, Left, Right, Front, Back.
+        
+        The internal cube representation is a 2D unfolded cube:
+        Rows 0-2:   spaces + U (yellow) + spaces
+        Rows 3-5:   L (blue) + F (red) + R (green) + B (orange)
+        Rows 6-8:   spaces + D (white) + spaces
+        """
+        lines_split = self.lines.split('\n')
+        
+        faces = {}
+        
+        # U (Up) face: columns 3-5, rows 0-2
+        faces['U'] = []
+        for row in range(3):
+            face_row = []
+            for col in range(3, 6):
+                face_row.append(lines_split[row][col])
+            faces['U'].append(face_row)
+        
+        # D (Down) face: columns 3-5, rows 6-8
+        faces['D'] = []
+        for row in range(6, 9):
+            face_row = []
+            for col in range(3, 6):
+                face_row.append(lines_split[row][col])
+            faces['D'].append(face_row)
+        
+        # L (Left) face: columns 0-2, rows 3-5
+        faces['L'] = []
+        for row in range(3, 6):
+            face_row = []
+            for col in range(0, 3):
+                face_row.append(lines_split[row][col])
+            faces['L'].append(face_row)
+        
+        # F (Front) face: columns 3-5, rows 3-5
+        faces['F'] = []
+        for row in range(3, 6):
+            face_row = []
+            for col in range(3, 6):
+                face_row.append(lines_split[row][col])
+            faces['F'].append(face_row)
+        
+        # R (Right) face: columns 6-8, rows 3-5
+        faces['R'] = []
+        for row in range(3, 6):
+            face_row = []
+            for col in range(6, 9):
+                face_row.append(lines_split[row][col])
+            faces['R'].append(face_row)
+        
+        # B (Back) face: columns 9-11, rows 3-5
+        faces['B'] = []
+        for row in range(3, 6):
+            face_row = []
+            for col in range(9, 12):
+                face_row.append(lines_split[row][col])
+            faces['B'].append(face_row)
+        
+        return faces
+        
 def main( size=3 ):
     cube = Cube( size )
 
