@@ -574,6 +574,23 @@ class Cube:
                 cube_copy.rotate( Cube.X_AXIS, slice_n=i, distance=1 )
                 cube_copy.rotate( Cube.X_AXIS, slice_n=i, distance=1 )
 
+
+        lines_split = cube_copy.lines.split( "\n" )
+        #now get r frace in front.
+        if lines_split[4][1] == 'r':
+            presolution += "y' "
+            for i in range( cube_copy.size ):
+                cube_copy.rotate( Cube.Y_AXIS, slice_n=i, distance=-1 )
+        elif lines_split[4][7] == 'r':
+            presolution += "y "
+            for i in range( cube_copy.size ):
+                cube_copy.rotate( Cube.Y_AXIS, slice_n=i, distance=1 )
+        elif lines_split[4][10] == 'r':
+            presolution += 'y2 '
+            for i in range( cube_copy.size ):
+                cube_copy.rotate( Cube.Y_AXIS, slice_n=i, distance=1 )
+                cube_copy.rotate( Cube.Y_AXIS, slice_n=i, distance=1 )
+
         return presolution, cube_copy
 
     def get_kociemba_string( self ):
@@ -600,23 +617,6 @@ class Cube:
         #before we can use kociemba, we need to rotate the cube with yellow face up and red in the front.
 
         presolution, cube_copy = self.get_presolution()
-        
-        lines_split = cube_copy.lines.split( "\n" )
-
-        #now get r frace in front.
-        if lines_split[4][1] == 'r':
-            presolution += "y' "
-            for i in range( cube_copy.size ):
-                cube_copy.rotate( Cube.Y_AXIS, slice_n=i, distance=-1 )
-        elif lines_split[4][7] == 'r':
-            presolution += "y "
-            for i in range( cube_copy.size ):
-                cube_copy.rotate( Cube.Y_AXIS, slice_n=i, distance=1 )
-        elif lines_split[4][10] == 'r':
-            presolution += 'y2 '
-            for i in range( cube_copy.size ):
-                cube_copy.rotate( Cube.Y_AXIS, slice_n=i, distance=1 )
-                cube_copy.rotate( Cube.Y_AXIS, slice_n=i, distance=1 )
         
         lines_split = cube_copy.lines.split( "\n" )
 
