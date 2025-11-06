@@ -265,7 +265,7 @@ def main():
         try:
             reverse_solution = st.session_state.cube.get_reverse_solution()
             if reverse_solution.strip():
-                st.markdown("**Steps from solved cube:**")
+                st.markdown("**Steps from solved cube:** (yellow on top, red in front)")
                 st.code(reverse_solution)
             else:
                 st.success("✅ Cube is already solved!")

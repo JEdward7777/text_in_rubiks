@@ -639,6 +639,12 @@ class Cube:
 
         return kociemba.solve( normal_string, current_string )
 
+    def solve_from( self, other ):
+        other_presolution, other_string = other.get_kociemba_string()
+        my_string = self.get_kociemba_string()[1]
+
+        return other_presolution + kociemba.solve( other_string, my_string )
+
     def do_command( self, command ):
         done = False
         if command == "L":
@@ -727,6 +733,19 @@ class Cube:
             size = int(len( lines ) / 3)
             self.size = size
             self.lines = "\n".join( lines )
+        elif command == "solve from":
+            lines = []
+            read_line = input( "" )
+            while read_line != "":
+                lines.append( read_line )
+                read_line = input( "" )
+            size = int(len( lines ) / 3)
+            _from = Cube( size )
+            _from.size = size
+            _from.lines = "\n".join( lines )
+
+            print(self.solve_from( _from ))
+
         elif command == "to string" or command == "get string":
             print( cubeToString( self ) )
         elif command == "from string" or command == "set string":
