@@ -1,6 +1,6 @@
 import streamlit as st
 import copy
-from cube import Cube, stringToCube, cubeToString
+from cube import Cube, stringToCube, cubeToString, numberToCube, cubeToNumber
 import huffy_code
 
 # Configure page
@@ -50,6 +50,7 @@ def display_cube(cube, editable=False):
                         ):
                             # Update the cube state
                             update_cube_square(row_idx, col_idx, st.session_state.active_color)
+                            update_url()
                             st.rerun()
                     else:
                         # Regular display with minimal styling
@@ -143,6 +144,7 @@ def create_color_palette():
             with face_cols[i]:
                 if st.button(f"{face}", key=f"rot_{face}", help=f"Rotate {face} face clockwise"):
                     st.session_state.cube.do_command(face)
+                    update_url()
                     st.rerun()
         
         # Prime rotations
@@ -152,6 +154,7 @@ def create_color_palette():
             with prime_cols[i]:
                 if st.button(f"{face}'", key=f"rot_{face}_prime", help=f"Rotate {face} face counter-clockwise"):
                     st.session_state.cube.do_command(f"{face}'")
+                    update_url()
                     st.rerun()
         
         # Double rotations
@@ -161,6 +164,7 @@ def create_color_palette():
             with double_cols[i]:
                 if st.button(f"{face}2", key=f"rot_{face}_2", help=f"Rotate {face} face 180°"):
                     st.session_state.cube.do_command(f"{face}2")
+                    update_url()
                     st.rerun()
         
         # Enter paint mode
@@ -170,12 +174,33 @@ def create_color_palette():
             st.session_state.paint_mode = True
             st.rerun()
 
+def update_url():
+    """Update the URL with the current cube number"""
+    current_number = cubeToNumber(st.session_state.cube)
+    if current_number != st.session_state.get('current_number', None):
+        st.session_state.current_number = current_number
+        st.query_params['n'] = str(current_number)
+
 def initialize_session_state():
     """Initialize session state variables"""
     if 'cube' not in st.session_state:
         st.session_state.cube = Cube(3)
     if 'warning_message' not in st.session_state:
         st.session_state.warning_message = ""
+    if 'current_number' not in st.session_state:
+        st.session_state.current_number = cubeToNumber(st.session_state.cube)
+
+    # Check for URL state
+    query_params = st.query_params
+    if 'n' in query_params:
+        try:
+            number = int(query_params['n'])
+            if number != st.session_state.current_number:
+                st.session_state.cube = numberToCube(number)
+                st.session_state.current_number = number
+                st.session_state.warning_message = ""  # Clear warnings
+        except (ValueError, TypeError, KeyError):
+            pass  # Invalid number, ignore
 
 def main():
     st.title("🧩 Virtual Rubik's Cube - String Encoder")
@@ -217,19 +242,19 @@ def main():
                     # Check string length and show warning if needed
                     as_number = huffy_code.to_number(input_string)
                     max_number = 43252003274489856000
-                    
+
                     if as_number >= max_number:
                         st.session_state.warning_message = f"⚠️ Warning: String '{input_string}' is too long! (Number: {as_number:,}) - Proceeding anyway to show result."
                     else:
                         st.session_state.warning_message = ""  # Clear warning
-                    
+
                     # Convert string to cube
                     st.session_state.cube = stringToCube(input_string)
-                    
-                    
+                    update_url()
+
                     st.success(f"✅ String '{input_string}' encoded into cube!")
                     st.rerun()
-                    
+
                 except Exception as e:
                     st.error(f"Error encoding string: {str(e)}")
                     st.session_state.warning_message = ""  # Clear warning on error
@@ -280,12 +305,14 @@ def main():
             if st.button("🎲 Scramble"):
                 st.session_state.cube.scramble()
                 st.session_state.warning_message = ""  # Clear warnings
+                update_url()
                 st.rerun()
-        
+
         with col_b:
             if st.button("🔄 Reset"):
                 st.session_state.cube = Cube(3)
                 st.session_state.warning_message = ""  # Clear warnings
+                update_url()
                 st.rerun()
         
         # Cube State Editor - moved to bottom and wrapped in expander
@@ -321,6 +348,7 @@ def main():
                 try:
                     # Validate and set the new cube state
                     st.session_state.cube.lines = edited_lines
+                    update_url()
                     st.success("✅ Cube state updated successfully!")
                     st.rerun()
                 except Exception as e:
