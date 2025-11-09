@@ -176,10 +176,13 @@ def create_color_palette():
 
 def update_url():
     """Update the URL with the current cube number"""
-    current_number = cubeToNumber(st.session_state.cube)
-    if current_number != st.session_state.get('current_number', None):
-        st.session_state.current_number = current_number
-        st.query_params['n'] = str(current_number)
+    try:
+        current_number = cubeToNumber(st.session_state.cube)
+        if current_number != st.session_state.get('current_number', None):
+            st.session_state.current_number = current_number
+            st.query_params['n'] = str(current_number)
+    except Exception as e:
+        print(f"Error updating URL: {e}")
 
 def initialize_session_state():
     """Initialize session state variables"""
